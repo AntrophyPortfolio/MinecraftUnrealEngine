@@ -1,8 +1,13 @@
-#include "MinecraftGrip/TerrainGeneration/Public/Voxel.h"
-#include "MinecraftGrip/TerrainGeneration/Public/BlockType.h"
-#include "MinecraftGrip/TerrainGeneration/Public/ChunkData.h"
-#include "MinecraftGrip/TerrainGeneration/Public/GameWorld.h"
-#include "MinecraftGrip/TerrainGeneration/Public/VoxelData.h"
+#include "TerrainGeneration/Public/Voxel.h"
+#include "TerrainGeneration/Public/BlockType.h"
+#include "TerrainGeneration/Public/ChunkData.h"
+#include "TerrainGeneration/Public/GameWorld.h"
+#include "TerrainGeneration/Public/VoxelData.h"
+
+FVoxel::FVoxel()
+{
+	
+}
 
 EBlockType FVoxel::DetermineBlockTypeBasedOnHeight() const
 {
@@ -85,7 +90,7 @@ EMinecraftTextureType FVoxel::GetTextureType(const int32 InSideIndex) const
 
 void FVoxel::AssignPropertiesBasedOnType()
 {
-	for (const FVoxel Voxel : FVoxelData::VoxelTypes)
+	for (const FVoxel Voxel : VoxelData->GetVoxelTypes())
 	{
 		if (Voxel.BlockType == BlockType)
 		{
@@ -98,9 +103,10 @@ void FVoxel::AssignPropertiesBasedOnType()
 	}
 }
 
-void FVoxel::InitializeVoxel(const FVector& InPosition)
+void FVoxel::InitializeVoxel(const FVector& InPosition, UVoxelData* InVoxelData)
 {
 	PositionInChunk = InPosition;
+	VoxelData = InVoxelData;
 
 	BlockType = DetermineBlockTypeBasedOnHeight();
 	AssignPropertiesBasedOnType();
@@ -108,7 +114,7 @@ void FVoxel::InitializeVoxel(const FVector& InPosition)
 
 void FVoxel::InitializeVoxelType(const bool InbIsSolid, const EBlockType InBlockType, const float InDestroyTime,
                                  const EMinecraftTextureType InSideTexture, const EMinecraftTextureType InTopTexture,
-                                 const EMinecraftTextureType InBottomTexture)
+                                 const EMinecraftTextureType InBottomTexture, UVoxelData* InVoxelData)
 {
 	SideTexture = InSideTexture;
 	TopTexture = InTopTexture;
@@ -116,12 +122,14 @@ void FVoxel::InitializeVoxelType(const bool InbIsSolid, const EBlockType InBlock
 	bIsSolid = InbIsSolid;
 	DestroyTime = InDestroyTime;
 	BlockType = InBlockType;
+	VoxelData = InVoxelData;
 }
 
-void FVoxel::InitializeSpecificVoxel(const FVector& InPosition, const EBlockType InBlockType)
+void FVoxel::InitializeSpecificVoxel(const FVector& InPosition, const EBlockType InBlockType, UVoxelData* InVoxelData)
 {
 	PositionInChunk = InPosition;
 	BlockType = InBlockType;
+	VoxelData = InVoxelData;
 
 	AssignPropertiesBasedOnType();
 }

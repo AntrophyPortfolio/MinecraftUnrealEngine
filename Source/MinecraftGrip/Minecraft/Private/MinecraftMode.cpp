@@ -1,9 +1,9 @@
-#include "MinecraftGrip/Minecraft/Public/MinecraftMode.h"
-#include "MinecraftGrip/Characters/Public/PlayerManager.h"
-#include "MinecraftGrip/Minecraft/Public/SaveMinecraftGame.h"
-#include "MinecraftGrip/TerrainGeneration/Public/Chunk.h"
-#include "MinecraftGrip/TerrainGeneration/Public/ChunkData.h"
-#include "MinecraftGrip/TerrainGeneration/Public/GameWorld.h"
+#include "Minecraft/Public/MinecraftMode.h"
+#include "Characters/Public/PlayerManager.h"
+#include "Minecraft/Public/SaveMinecraftGame.h"
+#include "TerrainGeneration/Public/Chunk.h"
+#include "TerrainGeneration/Public/ChunkData.h"
+#include "TerrainGeneration/Public/GameWorld.h"
 
 #include "Kismet/GameplayStatics.h"
 
@@ -16,7 +16,7 @@ AMinecraftMode::AMinecraftMode()
 	HUDClass = MainHUD.Object;
 }
 
-void AMinecraftMode::HandleSaveGame(const AGameWorld* InGameWorld)
+void AMinecraftMode::HandleSaveGame(const AGameWorld* InGameWorld) const
 {
 	if (USaveMinecraftGame* SaveGameInstance = Cast<USaveMinecraftGame>(UGameplayStatics::CreateSaveGameObject(USaveMinecraftGame::StaticClass())))
 	{
@@ -52,7 +52,7 @@ void AMinecraftMode::HandleSaveGame(const AGameWorld* InGameWorld)
 	}
 }
 
-void AMinecraftMode::HandleLoadGame(AGameWorld* InGameWorld)
+void AMinecraftMode::HandleLoadGame(AGameWorld* InGameWorld) const
 {
 	if (const USaveMinecraftGame* LoadedGame = Cast<USaveMinecraftGame>(UGameplayStatics::LoadGameFromSlot("MinecraftGameSave5", 0)))
 	{

@@ -1,9 +1,9 @@
-#include "MinecraftGrip/TerrainGeneration/Public/GameWorld.h"
-#include "MinecraftGrip/Minecraft/Public/SaveMinecraftGame.h"
-#include "MinecraftGrip/TerrainGeneration/Public/Chunk.h"
-#include "MinecraftGrip/TerrainGeneration/Public/ChunkData.h"
-#include "MinecraftGrip/TerrainGeneration/Public/ChunkLoaderAsync.h"
-#include "MinecraftGrip/TerrainGeneration/Public/VoxelData.h"
+#include "TerrainGeneration/Public/GameWorld.h"
+#include "Minecraft/Public/SaveMinecraftGame.h"
+#include "TerrainGeneration/Public/Chunk.h"
+#include "TerrainGeneration/Public/ChunkData.h"
+#include "TerrainGeneration/Public/ChunkLoaderAsync.h"
+#include "TerrainGeneration/Public/VoxelData.h"
 
 #include "Kismet/GameplayStatics.h"
 
@@ -11,11 +11,7 @@ TQueue<FMeshData> AGameWorld::ChunkSpawnerQueue;
 int32 AGameWorld::SeededPerlinNoiseNumber;
 FRandomStream AGameWorld::RandomStream;
 
-AGameWorld::AGameWorld() :
-	ViewDistanceInChunks(10),
-	PlayerPreviousPositionChunk(FVector2D(FChunkData::WorldSizeInChunks / 2 - ViewDistanceInChunks,
-	                                      FChunkData::WorldSizeInChunks / 2 + ViewDistanceInChunks)),
-	NumberOfChunksAllowed(400)
+AGameWorld::AGameWorld()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	RandomStream = FRandomStream();
@@ -24,6 +20,8 @@ AGameWorld::AGameWorld() :
 void AGameWorld::BeginPlay()
 {
 	Super::BeginPlay();
+
+	PlayerPreviousPositionChunk = FVector2D(FChunkData::WorldSizeInChunks / 2 - ViewDistanceInChunks, FChunkData::WorldSizeInChunks / 2 + ViewDistanceInChunks);
 }
 
 void AGameWorld::InitializeGameWorld()
@@ -59,10 +57,10 @@ void AGameWorld::CheckViewDistance()
 {
 	const FVector2D ChunkCoordinates = FChunkData::GetChunkPositionFromVector(
 		GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation());
-	
+
 	PlayerPreviousPositionChunk = PlayerPositionChunk;
 
-	TArray<FVector2D> PreviouslyActiveChunks{ActiveChunks};
+	TArray PreviouslyActiveChunks{ActiveChunks};
 
 	ActiveChunks.Reset();
 
@@ -81,7 +79,7 @@ void AGameWorld::CheckViewDistance()
 					AChunk* Chunk = GetWorld()->SpawnActor<AChunk>(FVector{Location}, FRotator::ZeroRotator,
 					                                               FActorSpawnParameters{});
 					checkf(Chunk != nullptr, TEXT("Chunk is not valid."));
-					Chunk->InitializeChunk(this, Location);
+					Chunk->InitializeChunk(this, Location, VoxelData);
 					ChunkArray[x].ChunkWidthArray[y] = Chunk;
 				}
 				ChunkArray[x].ChunkWidthArray[y]->SetChunkIsActive(true);
@@ -129,7 +127,7 @@ void AGameWorld::GenerateChunks()
 			ChunkArray[x].ChunkWidthArray[y] = Chunk;
 			ActiveChunks.Add(FVector2D(x, y));
 
-			Chunk->InitializeChunk(this, Location);
+			Chunk->InitializeChunk(this, Location, VoxelData);
 		}
 	}
 }
@@ -143,9 +141,9 @@ void AGameWorld::HandleChunkDelayedSpawner(const float DeltaTime)
 		FMeshData MeshData;
 		if (ChunkSpawnerQueue.Dequeue(MeshData))
 		{
-			if (MeshData.XCoord < ChunkArray.Num() && MeshData.YCoord < ChunkArray[0].ChunkWidthArray.Num())
+			if (MeshData.XCoordinate < ChunkArray.Num() && MeshData.YCoordinate < ChunkArray[0].ChunkWidthArray.Num())
 			{
-				AChunk* Chunk = ChunkArray[MeshData.XCoord].ChunkWidthArray[MeshData.YCoord];
+				AChunk* Chunk = ChunkArray[MeshData.XCoordinate].ChunkWidthArray[MeshData.YCoordinate];
 				Chunk->SetVoxelMap(MeshData.VoxelMap);
 				Chunk->RenderChunk(MeshData.Vertices, MeshData.Triangles, MeshData.UVs);
 				Chunk->SetVoxelMapPopulated(true);
@@ -222,7 +220,7 @@ void AGameWorld::SetChunkArray(const TArray<FChunkDetails>& InChunkArrayDetails)
 		ChunkArray[ChunkDetails.Coordinates.X].ChunkWidthArray[ChunkDetails.Coordinates.Y] = Chunk;
 		ActiveChunks.Add(FVector2D(ChunkDetails.Coordinates.X, ChunkDetails.Coordinates.Y));
 
-		Chunk->InitializeChunk(this, Location);
+		Chunk->InitializeChunk(this, Location, VoxelData);
 	}
 	SetTickableWhenPaused(true);
 }
@@ -237,12 +235,12 @@ bool AGameWorld::VoxelExistsAndIsSolid(const FVector& Position)
 
 	if (ChunkArray[ThisChunkPosition.X].ChunkWidthArray[ThisChunkPosition.Y] != nullptr
 		&& ChunkArray[ThisChunkPosition.X].ChunkWidthArray[ThisChunkPosition.Y]->GetVoxelMapPopulated())
-		return FVoxelData::VoxelTypes[static_cast<int32>(ChunkArray[ThisChunkPosition.X].ChunkWidthArray[ThisChunkPosition.Y]->GetVoxelFromGlobalFVector(Position).BlockType)]
+		return VoxelData->GetVoxelTypes()[static_cast<int32>(ChunkArray[ThisChunkPosition.X].ChunkWidthArray[ThisChunkPosition.Y]->GetVoxelFromGlobalFVector(Position).BlockType)]
 			.bIsSolid;
 
 	FVoxel Voxel;
-	Voxel.InitializeVoxel(Position);
-	return FVoxelData::VoxelTypes[static_cast<int32>(Voxel.BlockType)].bIsSolid;
+	Voxel.InitializeVoxel(Position, VoxelData);
+	return VoxelData->GetVoxelTypes()[static_cast<int32>(Voxel.BlockType)].bIsSolid;
 }
 
 AChunk* AGameWorld::GetChunkFromWorldPosition(const FVector& Position)

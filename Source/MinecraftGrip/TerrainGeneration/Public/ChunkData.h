@@ -1,7 +1,5 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
-
 #include "ChunkData.generated.h"
 
 // Structure that contains the relevant data for any chunk

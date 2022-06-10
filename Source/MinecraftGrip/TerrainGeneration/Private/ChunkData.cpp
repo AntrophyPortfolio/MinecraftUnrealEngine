@@ -1,4 +1,4 @@
-﻿#include "MinecraftGrip/TerrainGeneration/Public/ChunkData.h"
+﻿#include "TerrainGeneration/Public/ChunkData.h"
 
 bool FChunkData::IsChunkInWorld(const FVector2D& InChunkCoordinates)
 {

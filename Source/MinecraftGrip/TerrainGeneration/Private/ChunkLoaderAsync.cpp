@@ -1,20 +1,25 @@
-﻿#include "MinecraftGrip/TerrainGeneration/Public/ChunkLoaderAsync.h"
-#include "MinecraftGrip/TerrainGeneration/Public/Chunk.h"
-#include "MinecraftGrip/TerrainGeneration/Public/ChunkData.h"
-#include "MinecraftGrip/TerrainGeneration/Public/GameWorld.h"
-#include "MinecraftGrip/TerrainGeneration/Public/VoxelData.h"
+﻿#include "TerrainGeneration/Public/ChunkLoaderAsync.h"
+
+#include "TerrainGeneration/Public/BlockType.h"
+#include "TerrainGeneration/Public/Chunk.h"
+#include "TerrainGeneration/Public/ChunkData.h"
+#include "TerrainGeneration/Public/GameWorld.h"
+#include "TerrainGeneration/Public/Voxel.h"
+#include "TerrainGeneration/Public/VoxelData.h"
 
 FChunkLoaderAsync::FChunkLoaderAsync(const FIntVector& InWorldPosition,
                                      const TMap<FIntVector, FVoxel>& InVoxelMap,
                                      const TMap<FIntVector, FVoxel>& InModifiedVoxelMap,
-                                     const TArray<FChunkWidth>& InChunkArray):
+                                     const TArray<FChunkWidth>& InChunkArray,
+                                     UVoxelData* InVoxelData):
 	SpawnPosition(InWorldPosition),
 	VertexIndex(0)
 {
 	MeshData.VoxelMap = InVoxelMap;
 	ModifiedVoxelMap = InModifiedVoxelMap;
-	MeshData.XCoord = InWorldPosition.X / FChunkData::ChunkWidthSize;
-	MeshData.YCoord = InWorldPosition.Y / FChunkData::ChunkWidthSize;
+	VoxelData = InVoxelData;
+	MeshData.XCoordinate = InWorldPosition.X / FChunkData::ChunkWidthSize;
+	MeshData.YCoordinate = InWorldPosition.Y / FChunkData::ChunkWidthSize;
 	ChunkArray = InChunkArray;
 }
 
@@ -48,7 +53,7 @@ void FChunkLoaderAsync::PopulateVoxelMap()
 				if (!MeshData.VoxelMap.Contains(FIntVector{x, y, z}))
 				{
 					FVoxel Voxel;
-					Voxel.InitializeVoxel(FVector{FIntVector{x, y, z}} + FVector{SpawnPosition});
+					Voxel.InitializeVoxel(FVector{FIntVector{x, y, z}} + FVector{SpawnPosition}, VoxelData);
 					MeshData.VoxelMap.Add(FIntVector(x, y, z), Voxel);
 
 					if (x <= FChunkData::ChunkWidthSize - 300 && x >= 300 && y <= 300 && y >= 300
@@ -59,7 +64,7 @@ void FChunkLoaderAsync::PopulateVoxelMap()
 						{
 							FVoxel TreeInitialVoxel;
 							const EBlockType WoodType = static_cast<EBlockType>(FMath::RandRange(8, 9));
-							TreeInitialVoxel.InitializeSpecificVoxel(FVector(x, y, z), WoodType);
+							TreeInitialVoxel.InitializeSpecificVoxel(FVector(x, y, z), WoodType, VoxelData);
 							MeshData.VoxelMap.Add(FIntVector(x, y, z), TreeInitialVoxel);
 
 							GenerateTreeAtLocation(FIntVector(x, y, z), WoodType);
@@ -91,10 +96,10 @@ void FChunkLoaderAsync::UpdateMeshData(const FIntVector& InPosition)
 {
 	for (int i = 0; i < 6; ++i)
 	{
-		if (!IsVoxelSideOccupied(FVector(InPosition + FVoxelData::SideChecks[i])))
+		if (!IsVoxelSideOccupied(FVector(InPosition + VoxelData->GetSideChecks()[i])))
 		{
 			for (int p = 0; p < 4; ++p)
-				MeshData.Vertices.Add(FVector{InPosition + FVoxelData::VoxelVertices[FVoxelData::VoxelSides[i].InnerInts[p]]});
+				MeshData.Vertices.Add(FVector{InPosition + VoxelData->GetVoxelVertices()[VoxelData->GetVoxelSides()[i].VoxelSides[p]]});
 
 			const int32 BlockID = static_cast<int32>(MeshData.VoxelMap.FindRef(InPosition).BlockType);
 
@@ -105,7 +110,7 @@ void FChunkLoaderAsync::UpdateMeshData(const FIntVector& InPosition)
 			MeshData.Triangles.Add(VertexIndex);
 			MeshData.Triangles.Add(VertexIndex + 3);
 
-			const EMinecraftTextureType TextureType = FVoxelData::VoxelTypes[BlockID].GetTextureType(i);
+			const EMinecraftTextureType TextureType = VoxelData->GetVoxelTypes()[BlockID].GetTextureType(i);
 			AddTexture(TextureType);
 
 			VertexIndex += 4;
@@ -115,7 +120,8 @@ void FChunkLoaderAsync::UpdateMeshData(const FIntVector& InPosition)
 
 void FChunkLoaderAsync::AddTexture(const EMinecraftTextureType InTextureType)
 {
-	MeshData.UVs.Append(FVoxelData::TextureTypeUVMapping.FindRef(InTextureType));
+	FUVCoordinates UVCoordinates = VoxelData->GetTextureTypeUVMapping().FindRef(InTextureType);
+	MeshData.UVs.Append(UVCoordinates.TextureCoordinates);
 }
 
 bool FChunkLoaderAsync::IsVoxelSideOccupied(const FVector& InPosition) const
@@ -125,7 +131,15 @@ bool FChunkLoaderAsync::IsVoxelSideOccupied(const FVector& InPosition) const
 	if (FVoxel::IsVoxelOutsideChunk(NewPos))
 		return VoxelExistsAndIsSolid(FVector(NewPos) + FVector{SpawnPosition});
 
-	return FVoxelData::VoxelTypes[static_cast<int32>(MeshData.VoxelMap.FindRef(NewPos).BlockType)].bIsSolid;
+	if (MeshData.XCoordinate >= 240 || MeshData.YCoordinate >= 240)
+	{
+		return false;
+	}
+	TArray<FVoxel> VoxelTypes = VoxelData->GetVoxelTypes();
+	const FVoxel FoundVoxel = MeshData.VoxelMap.FindRef(NewPos);
+	EBlockType BlockType = FoundVoxel.BlockType;
+	const int32 Index = static_cast<int32>(BlockType);
+	return VoxelTypes[Index].bIsSolid;
 }
 
 bool FChunkLoaderAsync::VoxelExistsAndIsSolid(const FVector& InPosition) const
@@ -138,12 +152,12 @@ bool FChunkLoaderAsync::VoxelExistsAndIsSolid(const FVector& InPosition) const
 
 	if (ChunkArray[ThisChunkPosition.X].ChunkWidthArray[ThisChunkPosition.Y] != nullptr
 		&& ChunkArray[ThisChunkPosition.X].ChunkWidthArray[ThisChunkPosition.Y]->GetVoxelMapPopulated())
-		return FVoxelData::VoxelTypes[static_cast<int>(ChunkArray[ThisChunkPosition.X].ChunkWidthArray[ThisChunkPosition.Y]->GetVoxelFromGlobalFVector(InPosition).BlockType)]
+		return VoxelData->GetVoxelTypes()[static_cast<int>(ChunkArray[ThisChunkPosition.X].ChunkWidthArray[ThisChunkPosition.Y]->GetVoxelFromGlobalFVector(InPosition).BlockType)]
 			.bIsSolid;
 
 	FVoxel Voxel;
-	Voxel.InitializeVoxel(InPosition);
-	return FVoxelData::VoxelTypes[static_cast<int>(Voxel.BlockType)].bIsSolid;
+	Voxel.InitializeVoxel(InPosition, VoxelData);
+	return VoxelData->GetVoxelTypes()[static_cast<int>(Voxel.BlockType)].bIsSolid;
 }
 
 FVoxel FChunkLoaderAsync::GetVoxelFromWorldPosition(const FVector& InPosition) const
@@ -168,10 +182,10 @@ void FChunkLoaderAsync::GenerateTreeTop(const FVector& InPosition, const EBlockT
 		{
 			for (int32 OffsetZ = -200; OffsetZ <= 100; OffsetZ += 100)
 			{
-				if (FMath::RandRange(0,10) > 4)
+				if (FMath::RandRange(0, 10) > 4)
 				{
 					FVector LeafVoxelPosition{InPosition.X + OffsetX, InPosition.Y + OffsetY, InPosition.Z + OffsetZ};
-					GenerateLeafAtPosition(LeafVoxelPosition, InTreeTopType);	
+					GenerateLeafAtPosition(LeafVoxelPosition, InTreeTopType);
 				}
 			}
 		}
@@ -181,7 +195,7 @@ void FChunkLoaderAsync::GenerateTreeTop(const FVector& InPosition, const EBlockT
 void FChunkLoaderAsync::GenerateLeafAtPosition(const FVector& InLocation, const EBlockType InTreeTopType)
 {
 	FVoxel LeafVoxel;
-	LeafVoxel.InitializeSpecificVoxel(InLocation, InTreeTopType);
+	LeafVoxel.InitializeSpecificVoxel(InLocation, InTreeTopType, VoxelData);
 	MeshData.VoxelMap.Add(FIntVector(InLocation), LeafVoxel);
 }
 
@@ -195,7 +209,7 @@ void FChunkLoaderAsync::GenerateTreeAtLocation(const FIntVector& InLocation, con
 	{
 		FVoxel TreeTrunkVoxel;
 		FVector VoxelLocation(InLocation.X, InLocation.Y, InLocation.Z + TreeHeight);
-		TreeTrunkVoxel.InitializeSpecificVoxel(VoxelLocation, TreeTrunkType);
+		TreeTrunkVoxel.InitializeSpecificVoxel(VoxelLocation, TreeTrunkType, VoxelData);
 		MeshData.VoxelMap.Add(FIntVector{VoxelLocation}, TreeTrunkVoxel);
 
 		if (TreeHeight == MaxHeight)

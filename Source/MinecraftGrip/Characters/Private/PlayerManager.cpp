@@ -1,14 +1,18 @@
-#include "MinecraftGrip/Characters/Public/PlayerManager.h"
-#include "MinecraftGrip/Characters/Public/BlockPlacer.h"
-#include "MinecraftGrip/Minecraft/Public/MinecraftMode.h"
-#include "MinecraftGrip/TerrainGeneration/Public/Chunk.h"
-#include "MinecraftGrip/TerrainGeneration/Public/GameWorld.h"
-#include "MinecraftGrip/TerrainGeneration/Public/VoxelData.h"
+#include "Characters/Public/PlayerManager.h"
+#include "Characters/Public/BlockPlacer.h"
+#include "Minecraft/Public/MinecraftMode.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "EngineUtils.h"
+
+#include "Camera/CameraComponent.h"
+
+#include "TerrainGeneration/Public/Chunk.h"
+#include "TerrainGeneration/Public/GameWorld.h"
+#include "TerrainGeneration/Public/VoxelData.h"
+#include "TerrainGeneration/Public/BlockType.h"
 
 APlayerManager::APlayerManager() :
 	SelectedBlockIndex(1),
@@ -153,7 +157,7 @@ void APlayerManager::HandleStopSprinting()
 void APlayerManager::HandlePlaceBlock()
 {
 	if (CanManipulateBlocks)
-		GameWorld->GetChunkFromWorldPosition(PlaceBlock->GetActorLocation())->UpdateChunkWithVoxel(PlaceBlock->GetActorLocation(), FVoxelData::VoxelTypes[SelectedBlockIndex].BlockType);
+		GameWorld->GetChunkFromWorldPosition(PlaceBlock->GetActorLocation())->UpdateChunkWithVoxel(PlaceBlock->GetActorLocation(), VoxelData->GetVoxelTypes()[SelectedBlockIndex].BlockType);
 }
 
 void APlayerManager::PlaceCursorBlock()
@@ -215,7 +219,7 @@ void APlayerManager::HandleMouseScrollUp()
 {
 	SelectedBlockIndex++;
 
-	if (SelectedBlockIndex > FVoxelData::VoxelTypes.Num() - 1)
+	if (SelectedBlockIndex > VoxelData->GetVoxelTypes().Num() - 1)
 		SelectedBlockIndex = 1;
 }
 
@@ -224,7 +228,7 @@ void APlayerManager::HandleMouseScrollDown()
 	SelectedBlockIndex--;
 
 	if (SelectedBlockIndex < 1)
-		SelectedBlockIndex = FVoxelData::VoxelTypes.Num() - 1;
+		SelectedBlockIndex = VoxelData->GetVoxelTypes().Num() - 1;
 }
 
 void APlayerManager::HandleSaveGame()

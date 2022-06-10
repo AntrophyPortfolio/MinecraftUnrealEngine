@@ -1,8 +1,6 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-
 #include "BlockPlacer.generated.h"
 
 /**
@@ -15,15 +13,19 @@ class MINECRAFTGRIP_API ABlockPlacer final : public AActor
 
 public:
 	ABlockPlacer();
+	
+
+protected: // Overriden methods
+	
+	virtual void BeginPlay() override;
+
 	virtual void Tick(float DeltaTime) override;
 
-protected:
-	virtual void BeginPlay() override;
 
 private:
 	UPROPERTY()
 	UStaticMeshComponent* CubeMeshComponent;
+
 	UPROPERTY()
 	UStaticMesh* CubeMesh;
-
 };

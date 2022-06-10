@@ -1,4 +1,4 @@
-﻿#include "MinecraftGrip/Characters/Public/BlockPlacer.h"
+﻿#include "Characters/Public/BlockPlacer.h"
 
 ABlockPlacer::ABlockPlacer()
 {

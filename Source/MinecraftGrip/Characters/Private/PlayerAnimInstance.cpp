@@ -1,5 +1,5 @@
-#include "MinecraftGrip/Characters/Public/PlayerAnimInstance.h"
-#include "MinecraftGrip/Characters/Public/PlayerManager.h"
+#include "Characters/Public/PlayerAnimInstance.h"
+#include "Characters/Public/PlayerManager.h"
 
 void UPlayerAnimInstance::UpdateAnimationProperties(float const DeltaTime)
 {

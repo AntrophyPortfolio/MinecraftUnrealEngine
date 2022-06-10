@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Navigation/PathFollowingComponent.h"
 
@@ -24,7 +23,7 @@ class MINECRAFTGRIP_API ACreeperController final : public ACharacter
 public:
 	ACreeperController();
 	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -49,11 +48,16 @@ private: // AI controlling methods
 	UFUNCTION()
 	void OnMoveToPlayerCompleted(FAIRequestID InID, EPathFollowingResult::Type InResult);
 
-private: // Attributes for AI movement 
+private: // Attributes for AI movement
+	
 	bool IsMovingToPawn;
+	
 	bool IsMovingRandomly;
+	
 	FVector2D CurrentChunkPosition;
+	
 	FVector2D PreviousChunkPosition;
+	
 	UPROPERTY()
 	UPawnSensingComponent* PawnSensingComponent;
 
@@ -68,7 +72,9 @@ private: // Attributes for AI movement
 
 private: // Attributes for visuals.
 	bool IsExploding;
+	
 	float TimeUntilExplosion;
+	
 	float TimeUntilMaterialSwap;
 	
 	UPROPERTY()
@@ -84,10 +90,12 @@ private: // Attributes for visuals.
 	UMaterial* CreeperMaterial;
 
 private: // Attributes needed for functionalities.
+	
 	UPROPERTY()
 	AGameWorld* GameWorld;
 
 private: // Attributes for creeper statistics.
+	
 	float ExplosionStrength;
 
 };

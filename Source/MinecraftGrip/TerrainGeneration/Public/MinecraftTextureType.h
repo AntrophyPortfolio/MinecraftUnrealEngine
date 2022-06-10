@@ -16,5 +16,5 @@ enum class EMinecraftTextureType : uint8
 	GreenLeafTexture UMETA(DisplayName = "GreenLeafTexture"),
 	BirchTopBottomTexture UMETA(DisplayName = "BirchTopBottomTexture"),
 	BirchSideTexture UMETA(DisplayName = "BirchSideTexture"),
-	BrownLeafTexture UMETA(DisplayName = "BirchLeafTexture")
+	BrownLeafTexture UMETA(DisplayName = "BrownLeafTexture")
 };

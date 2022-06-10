@@ -1,9 +1,12 @@
-#include "MinecraftGrip/TerrainGeneration/Public/Chunk.h"
-#include "MinecraftGrip/TerrainGeneration/Public/ChunkData.h"
-#include "MinecraftGrip/TerrainGeneration/Public/GameWorld.h"
-#include "MinecraftGrip/TerrainGeneration/Public/VoxelData.h"
-#include "MinecraftGrip/TerrainGeneration/Public/ChunkLoaderAsync.h"
-#include "MinecraftGrip/TerrainGeneration/Public/Voxel.h"
+#include "TerrainGeneration/Public/Chunk.h"
+#include "TerrainGeneration/Public/ChunkData.h"
+#include "TerrainGeneration/Public/GameWorld.h"
+#include "TerrainGeneration/Public/VoxelData.h"
+#include "TerrainGeneration/Public/ChunkLoaderAsync.h"
+#include "TerrainGeneration/Public/Voxel.h"
+#include "TerrainGeneration/Public/BlockType.h"
+
+#include "ProceduralMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 AChunk::AChunk() :
@@ -94,7 +97,7 @@ void AChunk::UpdateSurroundingChunks(const FIntVector& InVoxelPosition) const
 {
 	for (int32 ChunkSide = 0; ChunkSide < 6; ChunkSide++)
 	{
-		const FVector PositionToCheck = FVector(InVoxelPosition + FVoxelData::SideChecks[ChunkSide]);
+		const FVector PositionToCheck = FVector(InVoxelPosition + VoxelData->GetSideChecks()[ChunkSide]);
 
 		if (PositionToCheck.X < 0 || PositionToCheck.Y < 0
 			|| PositionToCheck.X >= FChunkData::ChunkWidthSize
@@ -107,12 +110,12 @@ void AChunk::UpdateSurroundingChunks(const FIntVector& InVoxelPosition) const
 
 void AChunk::RebuildChunk()
 {
-	InitializeChunk(GameWorld, SpawnLocation);
+	InitializeChunk(GameWorld, SpawnLocation, VoxelData);
 }
 
 void AChunk::LoadChunkAsync()
 {
-	(new FAutoDeleteAsyncTask<FChunkLoaderAsync>(SpawnLocation, VoxelMap, VoxelMapModifications, GameWorld->GetChunkArray()))->StartBackgroundTask();
+	(new FAutoDeleteAsyncTask<FChunkLoaderAsync>(SpawnLocation, VoxelMap, VoxelMapModifications, GameWorld->GetChunkArray(), VoxelData))->StartBackgroundTask();
 }
 
 FIntVector AChunk::FVectorToFlooredVector(const FVector& InFVector)
@@ -140,12 +143,13 @@ void AChunk::SetChunkIsActive(const bool bIsActive)
 	}
 }
 
-void AChunk::InitializeChunk(AGameWorld* InGameWorld, const FIntVector& InSpawnLocation)
+void AChunk::InitializeChunk(AGameWorld* InGameWorld, const FIntVector& InSpawnLocation, UVoxelData* InVoxelData)
 {
 	checkf(InGameWorld != nullptr, TEXT("GameWorld is not valid."));
 
 	GameWorld = InGameWorld;
 	SpawnLocation = InSpawnLocation;
+	VoxelData = InVoxelData;
 	LoadChunkAsync();
 }
 

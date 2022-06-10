@@ -1,15 +1,15 @@
 #pragma once
 
-#include "BlockType.h"
 #include "Voxel.h"
 
-#include "CoreMinimal.h"
-#include "ProceduralMeshComponent.h"
 #include "GameFramework/Actor.h"
-
 #include "Chunk.generated.h"
 
+class UVoxelData;
 struct FChunkWidth;
+enum class EBlockType : uint8;
+class UProceduralMeshComponent;
+class AGameWorld;
 
 /**
  * The class manages data about the chunk and its voxels.
@@ -20,12 +20,19 @@ class MINECRAFTGRIP_API AChunk final : public AActor
 	GENERATED_BODY()
 
 public:
+	
 	AChunk();
+
+protected: // Overriden methods
+	
 	virtual void Tick(const float DeltaTime) override;
+	
+	virtual void BeginPlay() override;
 
 public: // Chunk modifications
+	
 	// Creates and initializes the chunk. 
-	void InitializeChunk(AGameWorld* InGameWorld, const FIntVector& InSpawnLocation);
+	void InitializeChunk(AGameWorld* InGameWorld, const FIntVector& InSpawnLocation, UVoxelData* InVoxelData);
 
 	// Method renders chunk to the world to be visible.
 	void RenderChunk(const TArray<FVector>& InVertices, const TArray<int32>& InTriangles, const TArray<FVector2D>& InUVs);
@@ -61,19 +68,23 @@ public: // Methods for returning chunk data.
 
 	FORCEINLINE const FIntVector& GetSpawnLocation() const { return SpawnLocation; }
 
-protected:
-	virtual void BeginPlay() override;
-
 private: // Handles chunk updates
+	
 	void UpdateSurroundingChunks(const FIntVector& InVoxelPosition) const;
+	
 	void ModifyVoxel(const FIntVector& InPosition, const EBlockType InVoxelType);
+	
 	void LoadChunkAsync();
 
-
 private: // Attributes for keeping chunk data
+
+	UPROPERTY()
 	TMap<FIntVector, FVoxel> VoxelMap;
+	
 	FIntVector SpawnLocation;
+	
 	bool bIsVoxelMapPopulated;
+	
 	uint8 RenderFlip;
 
 	UPROPERTY()
@@ -82,7 +93,11 @@ private: // Attributes for keeping chunk data
 	UPROPERTY()
 	UProceduralMeshComponent* ProceduralMeshComponent;
 
+	UPROPERTY(EditDefaultsOnly, meta=(AllowPrivateAccess = "true"))
+	UVoxelData* VoxelData;
+
 private: // Attributes for basic need
+	
 	UPROPERTY()
-	class AGameWorld* GameWorld;
+	AGameWorld* GameWorld;
 };

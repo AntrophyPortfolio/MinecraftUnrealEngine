@@ -1,7 +1,7 @@
-#include "MinecraftGrip/Characters/Public/CreeperController.h"
-#include "MinecraftGrip/TerrainGeneration/Public/Chunk.h"
-#include "MinecraftGrip/TerrainGeneration/Public/ChunkData.h"
-#include "MinecraftGrip/TerrainGeneration/Public/GameWorld.h"
+#include "Characters/Public/CreeperController.h"
+#include "TerrainGeneration/Public/Chunk.h"
+#include "TerrainGeneration/Public/ChunkData.h"
+#include "TerrainGeneration/Public/GameWorld.h"
 
 #include "AIController.h"
 #include "NavigationSystem.h"
